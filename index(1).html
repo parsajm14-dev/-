@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>۸ در ۱: چالش واژگان و قواعد عربی</title>
+<style>
+:root{--bg:#1b1535;--card:#2a2250;--ac:#ffd23f;--ok:#2ecc71;--bad:#ff4d5e;--tx:#fff;--bl:#4cc9f0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;background:radial-gradient(circle at 50% 0,#3a2c75,var(--bg));color:var(--tx);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+.ar{font-family:"Traditional Arabic","Amiri","Scheherazade New",Tahoma,serif;direction:rtl}
+#app{max-width:900px;margin:auto;padding:10px}
+h1{text-align:center;color:var(--ac);text-shadow:3px 3px 0 #000a;font-size:clamp(20px,5vw,34px);margin:10px 0}
+.sub{text-align:center;opacity:.8;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.gc{background:var(--card);border:3px solid #000;box-shadow:5px 5px 0 #000;border-radius:14px;padding:14px;color:#fff;text-align:center;transition:.15s}
+.gc:hover{transform:translate(-2px,-2px);background:#3a3070}
+.gc .ic{font-size:38px}.gc b{display:block;margin:6px 0}.gc small{opacity:.7}
+.top{display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--card);border:3px solid #000;border-radius:12px;padding:8px 12px;margin-bottom:10px;flex-wrap:wrap}
+.btn{background:var(--ac);color:#000;border:3px solid #000;border-radius:10px;padding:6px 14px;font-weight:bold;box-shadow:3px 3px 0 #000}
+.btn:active{transform:translate(2px,2px);box-shadow:none}
+.stage{background:#120e26;border:3px solid #000;border-radius:14px;padding:10px;position:relative;overflow:hidden;min-height:420px}
+canvas{width:100%;display:block;background:#120e26;border-radius:10px;touch-action:none}
+.msg{text-align:center;font-size:20px;margin:8px 0;min-height:30px}
+.shake{animation:sh .35s}@keyframes sh{0%,100%{transform:none}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.flashok{box-shadow:0 0 0 4px var(--ok) inset}.flashbad{box-shadow:0 0 0 4px var(--bad) inset}
+.opts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.opt{font-size:24px;padding:10px 18px;background:var(--card);color:#fff;border:3px solid #000;border-radius:10px;box-shadow:3px 3px 0 #000}
+.opt.ok{background:var(--ok)}.opt.bad{background:var(--bad)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{height:90px;perspective:600px;border:0;background:none;padding:0}
+.mc div{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:3px solid #000;border-radius:10px;font-size:clamp(14px,3.6vw,24px);background:var(--bl);color:#000;transition:.2s}
+.mc.up div{background:#fff}.mc.done div{background:var(--ok);opacity:.5}.mc.bad div{background:var(--bad)}
+.word{background:var(--card);padding:8px 14px;border:3px solid #000;border-radius:10px;font-size:24px;margin:4px;display:inline-block}
+.word.sel{background:var(--ac);color:#000}
+.kb{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;direction:rtl}
+.kb button{width:42px;height:44px;font-size:22px;border:2px solid #000;border-radius:8px;background:var(--card);color:#fff}
+.kb button:disabled{opacity:.3}
+.blanks{font-size:38px;letter-spacing:8px;text-align:center;margin:10px;direction:rtl;min-height:50px}
+.hs{background:var(--card);border-radius:12px;padding:8px;margin-top:14px;text-align:center;font-size:14px}
+.hs span{display:inline-block;margin:2px 8px}
+.ov{position:absolute;inset:0;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:5;text-align:center;padding:10px}
+.slot{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:56px;padding:8px;border:3px dashed var(--bl);border-radius:10px;margin:8px 0;direction:rtl}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ========== Utilities ========== */
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n);
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=(a,n)=>shuf(a).slice(0,n);
+const app=$('#app');
+let AC;
+function tone(f,d=.15,type='square',v=.06,delay=0){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;const t=AC.currentTime+delay;o.connect(g);g.connect(AC.destination);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d)}catch(e){}}
+const sfx={ok(){tone(660,.1);tone(880,.15,'square',.06,.09)},bad(){tone(150,.3,'sawtooth',.08)},win(){[523,659,784,1048].forEach((f,i)=>tone(f,.2,'triangle',.08,i*.12))},click(){tone(440,.05)},lose(){[400,300,200].forEach((f,i)=>tone(f,.25,'sawtooth',.07,i*.15))}};
+const toFa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const HS={get(k){return +(localStorage.getItem('ar8_'+k)||0)},set(k,v){if(v>this.get(k))localStorage.setItem('ar8_'+k,v)}};
+
+/* ========== Data ========== */
+const VOC=[['ذَهَبَ','رفت'],['كَتَبَ','نوشت'],['جَلَسَ','نشست'],['دَرَسَ','درس خواند'],['فَتَحَ','باز کرد'],['أَكَلَ','خورد'],['شَرِبَ','نوشید'],['خَرَجَ','بیرون رفت'],['مَدْرَسَة','مدرسه'],['كِتَاب','کتاب'],['بَاب','در'],['مَاء','آب'],['شَمْس','خورشید'],['قَمَر','ماه'],['بَيْت','خانه'],['وَلَد','پسر'],['بِنْت','دختر'],['مُعَلِّم','معلم'],['سَمَك','ماهی'],['قَلَم','قلم']];
+const ANT=[['لَيْل','نَهَار'],['كَبِير','صَغِير'],['طَوِيل','قَصِير'],['جَدِيد','قَدِيم'],['فَتَحَ','أَغْلَقَ'],['دَخَلَ','خَرَجَ']];
+const PAST=['ذَهَبَ','كَتَبَ','جَلَسَ','فَتَحَ','أَكَلَ','شَرِبَ','نَصَرَ','سَمِعَ','خَرَجَ','دَخَلَ'];
+const PRES=['يَذْهَبُ','يَكْتُبُ','يَجْلِسُ','يَفْتَحُ','يَأْكُلُ','يَشْرَبُ','يَنْصُرُ','يَسْمَعُ','يَخْرُجُ','يَدْخُلُ'];
+const NOUN=['كِتَاب','مَدْرَسَة','بَيْت','قَلَم','شَمْس','مُعَلِّم','وَلَد','بَاب','مَاء','سَيَّارَة'];
+const NEG=['مَا ذَهَبَ','مَا كَتَبَ','لَا يَذْهَبُ','لَا يَكْتُبُ','مَا فَتَحَ','لَا يَأْكُلُ','مَا شَرِبَ','لَا يَجْلِسُ'];
+const POS=['ذَهَبَ','يَكْتُبُ','فَتَحَ','يَأْكُلُ','شَرِبَ','يَجْلِسُ','كِتَاب','مَدْرَسَة','قَلَم','بَيْت'];
+const PRON=[['أَنَا',['ذَهَبْتُ','ذَهَبَ','ذَهَبْتَ'],0],['أَنْتَ',['ذَهَبْتَ','ذَهَبْتُ','ذَهَبُوا'],0],['نَحْنُ',['ذَهَبْنَا','ذَهَبَتْ','ذَهَبْتُمْ'],0],['هُمْ',['ذَهَبُوا','ذَهَبْنَا','ذَهَبَ'],0],['هِيَ',['ذَهَبَتْ','ذَهَبَ','ذَهَبْتِ'],0],['هُوَ',['ذَهَبَ','ذَهَبَتْ','ذَهَبْنَا'],0],['أَنْتِ',['ذَهَبْتِ','ذَهَبْتَ','ذَهَبَتْ'],0],['أَنْتُمْ',['ذَهَبْتُمْ','ذَهَبْنَا','ذَهَبَ'],0]];
+const SENT=[['پسر به مدرسه رفت',['ذَهَبَ','الوَلَدُ','إِلَى','المَدْرَسَةِ']],['معلم کتاب را باز کرد',['فَتَحَ','المُعَلِّمُ','الكِتَابَ']],['دختر آب نوشید',['شَرِبَتِ','البِنْتُ','المَاءَ']],['پسر در خانه نشست',['جَلَسَ','الوَلَدُ','فِي','البَيْتِ']],['معلم نامه را نوشت',['كَتَبَ','المُعَلِّمُ','الرِّسَالَةَ']],['دانش‌آموز به کلاس وارد شد',['دَخَلَ','الطَّالِبُ','إِلَى','الصَّفِّ']]];
+const HANG=[['مَدْرَسَة','جایی که درس می‌خوانیم'],['كتاب','چیزی که می‌خوانیم'],['شمس','در روز می‌درخشد'],['قمر','شب در آسمان است'],['باب','با آن وارد اتاق می‌شویم'],['ماء','می‌نوشیم'],['قلم','با آن می‌نویسیم'],['سمك','در دریا شنا می‌کند'],['بيت','خانه'],['ولد','پسر']];
+const WS=[['كتاب','کتاب'],['قلم','قلم'],['باب','در'],['بيت','خانه'],['شمس','خورشید'],['قمر','ماه'],['ماء','آب'],['ولد','پسر'],['سمك','ماهی'],['درس','درس']];
+const LET='ابتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+
+/* ========== Hub ========== */
+const GAMES=[
+['shooter','🎯','شکار کلمات',Shooter],['match','🃏','حافظه کارتی',Match],['sort','🧺','طبقه‌بندی هوشمند',Sort],['search','🔍','جدول حروف',Search],
+['runner','🏃','دونده صیغه‌ها',Runner],['pop','🫧','حباب‌شکن',Pop],['sent','🚂','قطار جمله',Sentence],['hang','🔤','حدس حروف',Hang]];
+let cleanup=null,total=0;
+function hub(){
+ if(cleanup)cleanup();cleanup=null;
+ app.innerHTML=`<h1>۸ در ۱: چالش واژگان و قواعد عربی</h1><div class="sub">عربی هفتم، هشتم و نهم — یک بازی را انتخاب کن</div>
+ <div class="grid">${GAMES.map((g,i)=>`<button class="gc" data-i="${i}"><div class="ic">${g[1]}</div><b>${g[2]}</b><small>رکورد: ${toFa(HS.get(g[0]))}</small></button>`).join('')}</div>
+ <div class="hs">🏆 مجموع بهترین امتیازها: ${toFa(GAMES.reduce((s,g)=>s+HS.get(g[0]),0))}</div>`;
+ app.querySelectorAll('.gc').forEach(b=>b.onclick=()=>{sfx.click();start(+b.dataset.i)});
+}
+/* Shared game frame */
+let G;
+function start(i){
+ const[key,,name,fn]=GAMES[i];
+ G={key,score:0,lives:3,level:1,time:0,over:false,timers:[],raf:0,stage:null};
+ app.innerHTML=`<div class="top"><button class="btn" id="back">🏠 منو</button><b>${name}</b><span>⭐ <span id="sc">۰</span></span><span>❤️ <span id="lv">۳</span></span><span>سطح <span id="lvl">۱</span></span><span>⏱ <span id="tm">–</span></span><span>🏆 ${toFa(HS.get(key))}</span></div><div class="stage" id="stage"></div>`;
+ G.stage=$('#stage');
+ cleanup=()=>{G.over=true;cancelAnimationFrame(G.raf);G.timers.forEach(t=>{clearInterval(t);clearTimeout(t)});G.timers=[];document.onkeydown=null};
+ $('#back').onclick=hub;
+ fn(G.stage);
+}
+const every=(f,ms)=>{const t=setInterval(f,ms);G.timers.push(t);return t};
+const after=(f,ms)=>{const t=setTimeout(f,ms);G.timers.push(t);return t};
+function hud(){$('#sc').textContent=toFa(G.score);$('#lv').textContent=toFa(Math.max(0,G.lives));$('#lvl').textContent=toFa(G.level)}
+function setTime(t){const e=$('#tm');if(e)e.textContent=t==null?'–':toFa(t)}
+function good(p=10){G.score+=p;sfx.ok();flash('ok');hud();if(G.score>0&&G.score>=G.level*60){G.level++;hud()}}
+function badHit(p=5,life=true){G.score=Math.max(-99,G.score-p);if(life)G.lives--;sfx.bad();flash('bad');hud();G.stage.classList.remove('shake');void G.stage.offsetWidth;G.stage.classList.add('shake');if(G.lives<=0)end(false)}
+function flash(t){const s=G.stage;s.classList.add('flash'+t);setTimeout(()=>s.classList.remove('flash'+t),200)}
+function end(win){
+ if(G.over)return;G.over=true;cancelAnimationFrame(G.raf);G.timers.forEach(t=>{clearInterval(t);clearTimeout(t)});
+ win?sfx.win():sfx.lose();
+ const rec=G.score>HS.get(G.key);HS.set(G.key,G.score);
+ const o=document.createElement('div');o.className='ov';
+ o.innerHTML=`<h1>${win?'🎉 آفرین!':'💥 پایان بازی'}</h1><div style="font-size:24px">امتیاز: ${toFa(G.score)}</div>${rec?'<div style="color:var(--ac)">🏆 رکورد جدید!</div>':''}<div><button class="btn" id="again">🔁 دوباره</button> <button class="btn" id="home">🏠 منو</button></div>`;
+ G.stage.appendChild(o);
+ $('#again').onclick=()=>start(GAMES.findIndex(g=>g[0]===G.key));$('#home').onclick=hub;
+}
+/* Canvas helper */
+function mkCanvas(st,h=460){st.innerHTML='';const c=document.createElement('canvas');const W=Math.min(860,st.clientWidth-20||600);c.width=W;c.height=h;st.appendChild(c);return c}
+function pos(c,e){const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]||e.changedTouches[0]:e;return[(t.clientX-r.left)*c.width/r.width,(t.clientY-r.top)*c.height/r.height]}
+
+/* ========== 1 Shooter ========== */
+function Shooter(st){
+ const c=mkCanvas(st),x=c.getContext('2d');let bs=[],tgt,last=0,spawnT=0,tl=60;
+ const newT=()=>{tgt=VOC[rnd(VOC.length)]};newT();
+ every(()=>{tl--;setTime(tl);if(tl<=0)end(true)},1000);setTime(tl);
+ const spawn=()=>{const n=4;let ws=[tgt,...pick(VOC.filter(v=>v!==tgt),n-1)];ws.forEach(w=>bs.push({w:w[0],ok:w===tgt,x:50+Math.random()*(c.width-100),y:c.height+40,r:38,vy:35+G.level*10+Math.random()*20}))};
+ function loop(t){if(G.over)return;const dt=Math.min(.05,(t-last)/1000);last=t;spawnT-=dt;if(spawnT<=0){spawn();spawnT=3.5-Math.min(1.5,G.level*.2)}
+  x.clearRect(0,0,c.width,c.height);
+  bs.forEach(b=>b.y-=b.vy*dt);
+  const miss=bs.filter(b=>b.y<-40);bs=bs.filter(b=>b.y>=-40);
+  miss.forEach(b=>{if(b.ok){newT();bs=bs.filter(q=>q.y>0&&false||true);badHit(3,false)}});
+  bs.forEach(b=>{x.beginPath();x.arc(b.x,b.y,b.r,0,7);x.fillStyle='#4cc9f0aa';x.fill();x.lineWidth=3;x.strokeStyle='#fff';x.stroke();x.fillStyle='#fff';x.font='bold 26px Amiri,serif';x.textAlign='center';x.textBaseline='middle';x.fillText(b.w,b.x,b.y)});
+  x.fillStyle='#ffd23f';x.font='bold 28px Vazirmatn,Tahoma';x.textAlign='center';x.fillText('معنی: '+tgt[1],c.width/2,30);
+  G.raf=requestAnimationFrame(loop)}
+ G.raf=requestAnimationFrame(loop);
+ c.onpointerdown=e=>{const[px,py]=pos(c,e);const i=bs.findIndex(b=>Math.hypot(b.x-px,b.y-py)<b.r);if(i<0)return;const b=bs[i];bs.splice(i,1);if(b.ok){good(10);bs=[];newT();spawnT=0}else badHit(5,false)}
+}
+
+/* ========== 2 Match ========== */
+function Match(st){
+ let first=null,lock=false,found=0,tl=90;
+ const pairs=[...pick(VOC.slice(0,8),5).map(v=>[v[0],v[1]]),...pick(ANT,3).map(a=>[a[0],a[1]])].slice(0,8);
+ const cards=shuf(pairs.flatMap((p,i)=>[{t:p[0],i,ar:1},{t:p[1],i,ar:1}]));
+ st.innerHTML=`<div class="msg">جفت‌های درست را پیدا کن (کلمه و معنی/متضاد)</div><div class="cards">${cards.map((c,i)=>`<button class="mc" data-i="${i}"><div class="ar">؟</div></button>`).join('')}</div>`;
+ const els=[...st.querySelectorAll('.mc')];
+ every(()=>{tl--;setTime(tl);if(tl<=0)end(false)},1000);setTime(tl);
+ els.forEach((b,i)=>b.onclick=()=>{if(lock||b.classList.contains('up')||b.classList.contains('done'))return;sfx.click();b.classList.add('up');b.firstChild.textContent=cards[i].t;
+  if(first==null){first=i;return}
+  const a=first;first=null;lock=true;
+  if(cards[a].i===cards[i].i){after(()=>{[a,i].forEach(k=>{els[k].className='mc done'});good(15);found++;lock=false;if(found===pairs.length){G.score+=tl;hud();end(true)}},300)}
+  else{els[a].classList.add('bad');b.classList.add('bad');badHit(2,false);after(()=>{[a,i].forEach(k=>{els[k].className='mc';els[k].firstChild.textContent='؟'});lock=false},800)}
+ });
+}
+
+/* ========== 3 Sort ========== */
+function Sort(st){
+ const c=mkCanvas(st,480),x=c.getContext('2d');let items=[],last=0,sp=0,drag=null;
+ const cats=[['فعل ماضی',PAST,'#ff6b6b'],['فعل مضارع',PRES,'#4cc9f0'],['اسم',NOUN,'#2ecc71']];
+ const bw=()=>c.width/3;
+ const spawn=()=>{const k=rnd(3),l=cats[k][1];items.push({w:l[rnd(l.length)],k,x:60+Math.random()*(c.width-120),y:0,vy:30+G.level*10})};
+ function loop(t){if(G.over)return;const dt=Math.min(.05,(t-last)/1000);last=t;sp-=dt;if(sp<=0){spawn();sp=Math.max(1,3-G.level*.25)}
+  x.clearRect(0,0,c.width,c.height);
+  cats.forEach((k,i)=>{x.fillStyle=k[2]+'55';x.fillRect(i*bw()+4,c.height-70,bw()-8,66);x.strokeStyle=k[2];x.lineWidth=3;x.strokeRect(i*bw()+4,c.height-70,bw()-8,66);x.fillStyle='#fff';x.font='bold 22px Vazirmatn,Tahoma';x.textAlign='center';x.textBaseline='middle';x.fillText(k[0],(i+.5)*bw(),c.height-37)});
+  items.forEach(it=>{if(it!==drag)it.y+=it.vy*dt});
+  items=items.filter(it=>{if(it.y>c.height-80&&it!==drag){badHit(5);return false}return true});
+  items.forEach(it=>{x.fillStyle=it===drag?'#ffd23f':'#fff';x.fillRect(it.x-55,it.y-20,110,40);x.fillStyle='#000';x.font='bold 24px Amiri,serif';x.fillText(it.w,it.x,it.y+1)});
+  G.raf=requestAnimationFrame(loop)}
+ G.raf=requestAnimationFrame(loop);
+ c.onpointerdown=e=>{const[px,py]=pos(c,e);drag=[...items].reverse().find(it=>Math.abs(it.x-px)<55&&Math.abs(it.y-py)<22)||null;if(drag)c.setPointerCapture(e.pointerId)};
+ c.onpointermove=e=>{if(!drag)return;const[px,py]=pos(c,e);drag.x=px;drag.y=py};
+ c.onpointerup=e=>{if(!drag)return;const d=drag;drag=null;if(d.y>c.height-90){const k=Math.min(2,Math.floor(d.x/bw()));items=items.filter(i=>i!==d);k===d.k?good(10):badHit(5)}};
+}
+
+/* ========== 4 Word Search ========== */
+function Search(st){
+ let ws=pick(WS,4),N=6,grid,cells=[],path=[],found=0,tl=120,down=false;
+ grid=Array.from({length:N},()=>Array(N).fill(''));
+ const dirs=[[0,1],[1,0],[1,1],[0,-1],[-1,0]];
+ ws.forEach(w=>{const L=[...w[0]];for(let a=0;a<300;a++){const d=dirs[rnd(dirs.length)],r=rnd(N),cc=rnd(N);let ok=1;for(let k=0;k<L.length;k++){const rr=r+d[0]*k,c2=cc+d[1]*k;if(rr<0||c2<0||rr>=N||c2>=N||(grid[rr][c2]&&grid[rr][c2]!==L[k])){ok=0;break}}if(ok){L.forEach((ch,k)=>grid[r+d[0]*k][cc+d[1]*k]=ch);break}}});
+ grid=grid.map(r=>r.map(ch=>ch||LET[rnd(LET.length)]));
+ st.innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center"><div id="gr" style="display:grid;grid-template-columns:repeat(${N},52px);gap:4px;direction:ltr;touch-action:none"></div><div id="ls" style="min-width:150px"><div class="msg">معنی‌ها را پیدا کن (حروف را بکش):</div></div></div>`;
+ const gr=$('#gr');
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){const d=document.createElement('div');d.className='word ar';d.style.cssText='width:52px;height:52px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;font-size:28px';d.textContent=grid[r][c];d.dataset.r=r;d.dataset.c=c;gr.appendChild(d);cells.push(d)}
+ const ls=$('#ls');ws.forEach(w=>{const d=document.createElement('div');d.className='word';d.id='w_'+w[0];d.textContent=w[1];ls.appendChild(d)});
+ const at=e=>{const t=e.touches?e.touches[0]:e;const el=document.elementFromPoint(t.clientX,t.clientY);return el&&el.dataset&&el.dataset.r!=null?el:null};
+ const paint=()=>cells.forEach(d=>d.classList.toggle('sel',path.includes(d)));
+ const adj=(a,b)=>Math.max(Math.abs(a.dataset.r-b.dataset.r),Math.abs(a.dataset.c-b.dataset.c))===1;
+ const mv=e=>{if(!down)return;e.preventDefault();const el=at(e);if(!el)return;const i=path.indexOf(el);if(i>=0){path=path.slice(0,i+1)}else if(adj(path[path.length-1],el))path.push(el);paint()};
+ const up=()=>{if(!down)return;down=false;const s=path.map(d=>d.textContent).join(''),rv=[...s].reverse().join('');const w=ws.find(w=>!w.done&&(w[0]===s||w[0]===rv));
+  if(w){w.done=1;path.forEach(d=>d.style.background='#2ecc71');$('#w_'+w[0]).style.background='#2ecc71';good(20);found++;if(found===4){G.score+=tl;hud();end(true)}}
+  else if(path.length>1){badHit(3,false)}
+  path=[];paint();cells.forEach(d=>d.classList.remove('sel'))};
+ gr.onpointerdown=e=>{const el=at(e);if(!el)return;down=true;path=[el];paint()};
+ gr.addEventListener('touchmove',mv,{passive:false});gr.onpointermove=e=>{if(e.pointerType!=='touch')mv(e)};
+ window.onpointerup=up;gr.addEventListener('touchend',up);
+ const prev=cleanup;cleanup=()=>{window.onpointerup=null;prev()};
+ every(()=>{tl--;setTime(tl);if(tl<=0)end(false)},1000);setTime(tl);
+}
+
+/* ========== 5 Runner ========== */
+function Runner(st){
+ const c=mkCanvas(st,300),x=c.getContext('2d');let ob,px=80,py=0,vy=0,jumping=false,t0=0,last=0,q,state='wait',gx=0,answered=false;
+ st.insertAdjacentHTML('beforeend','<div class="msg" id="m">فعل مناسب ضمیر را انتخاب کن (ماضی)</div><div class="opts" id="o"></div>');
+ const gy=230;
+ function next(){q=PRON[rnd(PRON.length)];ob={x:c.width+20,w:40};answered=false;const ch=shuf(q[1]);$('#o').innerHTML=ch.map(v=>`<button class="opt ar">${v}</button>`).join('');
+  [...$('#o').children].forEach(b=>b.onclick=()=>{if(answered)return;if(b.textContent===q[1][0]){answered=true;b.classList.add('ok');jumping=true;vy=-520;good(10)}else{b.classList.add('bad');badHit(5)}})}
+ next();
+ function loop(t){if(G.over)return;const dt=Math.min(.05,(t-last)/1000);last=t;gx=(gx+dt*(160+G.level*30));
+  x.clearRect(0,0,c.width,c.height);x.fillStyle='#2a2250';x.fillRect(0,gy+30,c.width,70);
+  for(let i=0;i<20;i++){x.fillStyle='#fff3';x.fillRect(((i*80-gx)%(c.width+80)+c.width+80)%(c.width+80),gy+60,30,4)}
+  const spd=(160+G.level*30);ob.x-=spd*dt;
+  if(jumping){vy+=1300*dt;py+=vy*dt;if(py>=0){py=0;jumping=false}}
+  // obstacle
+  x.fillStyle='#ff4d5e';x.fillRect(ob.x,gy-30,ob.w,60);x.fillStyle='#fff';x.font='bold 28px Amiri,serif';x.textAlign='center';x.fillText(q[0],ob.x+20,gy-45);
+  // hit
+  if(ob.x<px+20&&ob.x+ob.w>px-20&&py>-40){ if(!answered){badHit(5);}ob.x=-100;next()}
+  if(ob.x<-60){if(answered){ }next()}
+  x.fillStyle='#ffd23f';x.fillRect(px-15,gy-40+py,30,70);x.fillStyle='#000';x.fillRect(px+4,gy-30+py,6,6);
+  G.raf=requestAnimationFrame(loop)}
+ G.raf=requestAnimationFrame(loop);
+}
+
+/* ========== 6 Pop ========== */
+function Pop(st){
+ const c=mkCanvas(st),x=c.getContext('2d');let bs=[],last=0,sp=0,tl=60;
+ every(()=>{tl--;setTime(tl);if(tl<=0)end(true)},1000);setTime(tl);
+ function loop(t){if(G.over)return;const dt=Math.min(.05,(t-last)/1000);last=t;sp-=dt;
+  if(sp<=0){const neg=Math.random()<.5;const w=neg?NEG[rnd(NEG.length)]:POS[rnd(POS.length)];bs.push({w,neg,x:50+Math.random()*(c.width-100),y:-40,r:44,vy:50+G.level*15});sp=Math.max(.5,1.2-G.level*.1)}
+  x.clearRect(0,0,c.width,c.height);bs.forEach(b=>b.y+=b.vy*dt);
+  bs=bs.filter(b=>{if(b.y>c.height+50){if(b.neg)badHit(0,true);return false}return true});
+  bs.forEach(b=>{x.beginPath();x.arc(b.x,b.y,b.r,0,7);x.fillStyle='#ff9ff3aa';x.fill();x.strokeStyle='#fff';x.lineWidth=3;x.stroke();x.fillStyle='#fff';x.font='bold 22px Amiri,serif';x.textAlign='center';x.textBaseline='middle';x.fillText(b.w,b.x,b.y)});
+  x.fillStyle='#ffd23f';x.font='bold 24px Vazirmatn,Tahoma';x.fillText('فقط افعال منفی (ما فَعَلَ / لا یَفْعَلُ) را بترکان!',c.width/2,24);
+  G.raf=requestAnimationFrame(loop)}
+ G.raf=requestAnimationFrame(loop);
+ c.onpointerdown=e=>{const[a,b]=pos(c,e);const i=bs.findIndex(q=>Math.hypot(q.x-a,q.y-b)<q.r);if(i<0)return;const q=bs.splice(i,1)[0];q.neg?good(10):badHit(5)}
+}
+
+/* ========== 7 Sentence ========== */
+function Sentence(st){
+ let i=0,order=shuf(SENT),sel,ans,done=0;
+ const rounds=Math.min(5,order.length);
+ function round(){const[fa,ws]=order[i];ans=[];
+  st.innerHTML=`<div class="msg">🚂 ترجمه: <b style="color:var(--ac)">${fa}</b></div><div class="slot ar" id="sl"></div><div class="opts" id="pl"></div><div class="msg">جمله ${toFa(i+1)} از ${toFa(rounds)}</div><div style="text-align:center"><button class="btn" id="rs">↺ بازنشانی</button></div>`;
+  const pool=shuf(ws.map((w,k)=>({w,k})));
+  const draw=()=>{$('#sl').innerHTML='';ans.forEach(a=>{const b=document.createElement('button');b.className='opt ar';b.textContent=a.w;b.onclick=()=>{ans=ans.filter(z=>z!==a);draw()};$('#sl').appendChild(b)});
+   $('#pl').innerHTML='';pool.filter(p=>!ans.includes(p)).forEach(p=>{const b=document.createElement('button');b.className='opt ar';b.textContent=p.w;b.onclick=()=>{sfx.click();ans.push(p);draw();if(ans.length===ws.length)check()};$('#pl').appendChild(b)})};
+  const check=()=>{if(ans.map(a=>a.w).join(' ')===ws.join(' ')){good(20);i++;if(i>=rounds){end(true)}else after(round,700)}else{badHit(5);after(()=>{ans=[];draw()},500)}};
+  $('#rs').onclick=()=>{ans=[];draw()};draw()}
+ round();
+}
+
+/* ========== 8 Hangman ========== */
+function Hang(st){
+ const ws=shuf(HANG);let i=0,miss=0,got,used,w,solved=0;const R=5;
+ G.lives=R;hud();
+ function round(){[w]=ws[i];got=new Set();used=new Set();miss=0;G.lives=R;hud();draw()}
+ function draw(){const hint=ws[i][1];
+  st.innerHTML=`<div class="msg">💡 راهنما: ${hint}</div><div class="blanks ar">${[...w].map(ch=>got.has(ch)?ch:'_').join(' ')}</div><div class="msg">${'❌'.repeat(miss)}${'⬜'.repeat(R-miss)}</div><div class="kb">${LET.map(l=>`<button ${used.has(l)?'disabled':''}>${l}</button>`).join('')}</div>`;
+  st.querySelectorAll('.kb button').forEach(b=>b.onclick=()=>guess(b.textContent))}
+ function guess(l){if(used.has(l))return;used.add(l);
+  const norm=s=>s;if(w.includes(l)){got.add(l);good(5);if([...w].every(ch=>got.has(ch))){G.score+=10;solved++;i++;hud();if(i>=Math.min(5,ws.length))return end(true);after(round,800);return draw()}}
+  else{miss++;G.lives=R-miss;G.score=Math.max(0,G.score-2);sfx.bad();flash('bad');hud();if(miss>=R){G.lives=0;hud();draw();return end(false)}}
+  draw()}
+}
+
+hub();
+</script>
+</body>
+</html>
